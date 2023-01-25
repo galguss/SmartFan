@@ -10,7 +10,6 @@ int CurrentStatus;
 // ----- buttons-----
 #define btnG D1
 #define btnR D2
-int numberForButtons;
 bool IsRedBtnPressed = false;
 bool IsGreenBtnPressed = false;
 bool IsTwoBtnsPressed = false;
@@ -51,7 +50,7 @@ void ControllerButtons() // A function returns a number representing which butto
 // ---- temperature Sensor ----
 #define DHTPIN D4 
 #define DHTTYPE DHT11
-float inputTeperature = 50.5; 
+float inputTeperature; 
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -82,15 +81,11 @@ void FanInActiveMode()
   if((millis() - timeForFanOn) > 2000)
   {
     FanOff();
-    Serial.println("On");
-    Serial.println(millis() - timeForFanOn);
   } 
   
   if((millis() - timeForFanOff) > 4000)
   {
-      Serial.println("Off");
-      Serial.println(millis() - timeForFanOff);
-      FanOn();
+    FanOn();
   }
 
   if(!IfTheFanIsOn){
@@ -107,17 +102,20 @@ void setup() {
   pinMode(btnR,  INPUT_PULLUP);
   dht.begin(); 
   Serial.begin(9600);
+  wifi_Setup();  
  
-  //timeForFanOn = millis();
   LastGreenBtnPressed = millis();
 }
 
 void loop() {
-  
+  wifi_loop();
   ControllerButtons();
   switch(CurrentStatus)
   {
     case ALWAYS_ON_MOSE:
+      if(IsGreenBtnPressed){
+        timeForFanOff = millis();
+      }
       FanInActiveMode();
       break;
     case ALWAYS_OFF_MOSE:
@@ -125,7 +123,6 @@ void loop() {
       break;
     case WORKING_MODE_BY_TEMPERATURE:
       float nowTemperature = dht.readHumidity();
-      Serial.println(nowTemperature);
       if(nowTemperature > inputTeperature){
         FanInActiveMode();
       }else{
