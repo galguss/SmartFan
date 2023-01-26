@@ -6,6 +6,7 @@
 #define ALWAYS_OFF_MOSE 22
 #define WORKING_MODE_BY_TEMPERATURE 23
 int CurrentStatus;
+char* status;
 
 // ----- buttons-----
 #define btnG D1
@@ -50,7 +51,8 @@ void ControllerButtons() // A function returns a number representing which butto
 // ---- temperature Sensor ----
 #define DHTPIN D4 
 #define DHTTYPE DHT11
-float inputTeperature; 
+float nowTemperature;
+float inputTeperature = 20; 
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -103,13 +105,15 @@ void setup() {
   dht.begin(); 
   Serial.begin(9600);
   wifi_Setup();  
- 
+  
+  status ="Off";
   LastGreenBtnPressed = millis();
 }
 
 void loop() {
   wifi_loop();
   ControllerButtons();
+  nowTemperature = dht.readHumidity();
   switch(CurrentStatus)
   {
     case ALWAYS_ON_MOSE:
@@ -117,16 +121,19 @@ void loop() {
         timeForFanOff = millis();
       }
       FanInActiveMode();
+      status = "On";
       break;
     case ALWAYS_OFF_MOSE:
       FanOff();
+      status = "Off";
       break;
     case WORKING_MODE_BY_TEMPERATURE:
-      float nowTemperature = dht.readHumidity();
       if(nowTemperature > inputTeperature){
         FanInActiveMode();
+        status = "Temperature";
       }else{
         FanOff();
+        status = "Off";
       }
       break;
   }
